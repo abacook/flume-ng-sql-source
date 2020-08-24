@@ -91,7 +91,7 @@ public class SQLSource extends AbstractSource implements Configurable, PollableS
         csvWriter = new CSVWriter(new ChannelWriter(),sqlSourceHelper.getDelimiterEntry().charAt(0));
          
 	/* Instantiate the sendWithIncClumn */
-	sendWithIncClumn = context.getString("incremental.column.send", DEFAULT_SEND_WITH_INC_CLUMN);    
+	sendWithIncClumn = context.getBoolean("incremental.column.send", DEFAULT_SEND_WITH_INC_CLUMN);    
     }  
     
     /**
