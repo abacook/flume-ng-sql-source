@@ -64,7 +64,8 @@ public class SQLSource extends AbstractSource implements Configurable, PollableS
     private SqlSourceCounter sqlSourceCounter;
     private CSVWriter csvWriter;
     private HibernateHelper hibernateHelper;
-       
+    private static final Boolean DEFAULT_SEND_WITH_INC_CLUMN = true;  
+	
     /**
      * Configure the source, load configuration properties and establish connection with database
      */
@@ -95,17 +96,24 @@ public class SQLSource extends AbstractSource implements Configurable, PollableS
      */
 	@Override
 	public Status process() throws EventDeliveryException {
-		
+		sendWithIncClumn = context.getString("incremental.column.send", DEFAULT_SEND_WITH_INC_CLUMN);
 		try {
 			sqlSourceCounter.startProcess();			
 			
 			List<List<Object>> result = hibernateHelper.executeQuery();
 						
 			if (!result.isEmpty())
-			{
-				csvWriter.writeAll(sqlSourceHelper.getAllRows(result),sqlSourceHelper.encloseByQuotes());
+			{       
+				List<List<Object>> result_send = result
+				if (!endWithIncClumn)
+				{     
+					for (int i = 0; i < result.size(); i++) {
+					result_send.get(i).remove(0) 
+					}
+				}
+				csvWriter.writeAll(sqlSourceHelper.getAllRows(result_send),sqlSourceHelper.encloseByQuotes());
 				csvWriter.flush();
-				sqlSourceCounter.incrementEventCount(result.size());
+				sqlSourceCounter.incrementEventCount(result_send.size());
 				
 				sqlSourceHelper.updateStatusFile();
 			}
