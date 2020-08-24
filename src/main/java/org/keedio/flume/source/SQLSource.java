@@ -64,7 +64,7 @@ public class SQLSource extends AbstractSource implements Configurable, PollableS
     private SqlSourceCounter sqlSourceCounter;
     private CSVWriter csvWriter;
     private HibernateHelper hibernateHelper;
-    private String sendWithIncClumn;	
+    private Boolean sendWithIncClumn;	
     private static final Boolean DEFAULT_SEND_WITH_INC_CLUMN = true;  
 	
     /**
@@ -91,7 +91,6 @@ public class SQLSource extends AbstractSource implements Configurable, PollableS
         csvWriter = new CSVWriter(new ChannelWriter(),sqlSourceHelper.getDelimiterEntry().charAt(0));
          
 	/* Instantiate the sendWithIncClumn */
-	this.context = context;
 	sendWithIncClumn = context.getString("incremental.column.send", DEFAULT_SEND_WITH_INC_CLUMN);    
     }  
     
