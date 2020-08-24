@@ -104,11 +104,11 @@ public class SQLSource extends AbstractSource implements Configurable, PollableS
 						
 			if (!result.isEmpty())
 			{       
-				List<List<Object>> result_send = result
+				List<List<Object>> result_send = result;
 				if (!endWithIncClumn)
 				{     
 					for (int i = 0; i < result.size(); i++) {
-					result_send.get(i).remove(0) 
+					result_send.get(i).remove(0); 
 					}
 				}
 				csvWriter.writeAll(sqlSourceHelper.getAllRows(result_send),sqlSourceHelper.encloseByQuotes());
