@@ -58,7 +58,7 @@ public class SQLSource extends AbstractSource implements Configurable, PollableS
     public long getMaxBackOffSleepInterval() {
         return 0;
     }
-
+    private Context context;
     private static final Logger LOG = LoggerFactory.getLogger(SQLSource.class);
     protected SQLSourceHelper sqlSourceHelper;
     private SqlSourceCounter sqlSourceCounter;
@@ -91,6 +91,7 @@ public class SQLSource extends AbstractSource implements Configurable, PollableS
         csvWriter = new CSVWriter(new ChannelWriter(),sqlSourceHelper.getDelimiterEntry().charAt(0));
          
 	/* Instantiate the sendWithIncClumn */
+	this.context = context;
 	sendWithIncClumn = context.getBoolean("incremental.column.send", DEFAULT_SEND_WITH_INC_CLUMN);    
     }  
     
