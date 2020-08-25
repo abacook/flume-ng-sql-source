@@ -56,7 +56,8 @@ public class SQLSourceHelper {
   private Map<String, String> statusFileJsonMap = new LinkedHashMap<String, String>();
 
   private boolean readOnlySession;
-
+  private boolean sendWithIncClumn;	
+  
   private static final String DEFAULT_STATUS_DIRECTORY = "/var/lib/flume";
   private static final int DEFAULT_QUERY_DELAY = 10000;
   private static final int DEFAULT_BATCH_SIZE = 100;
@@ -72,6 +73,8 @@ public class SQLSourceHelper {
   private static final String LAST_INDEX_STATUS_FILE = "LastIndex";
   private static final String QUERY_STATUS_FILE = "Query";
   private static final String DEFAULT_CHARSET_RESULTSET = "UTF-8";
+  private static final Boolean DEFAULT_SEND_WITH_INC_CLUMN = true;  
+  
 
   /**
    * Builds an SQLSourceHelper containing the configuration parameters and
@@ -97,7 +100,9 @@ public class SQLSourceHelper {
     connectionUserName = context.getString("hibernate.connection.user");
     connectionPassword = context.getString("hibernate.connection.password");
     readOnlySession = context.getBoolean("read.only", false);
-
+    
+    sendWithIncClumn = context.getBoolean("incremental.column.send", DEFAULT_SEND_WITH_INC_CLUMN);    
+    
     this.sourceName = sourceName;
     startFrom = context.getString("start.from", DEFAULT_INCREMENTAL_VALUE);
     delimiterEntry = context.getString("delimiter.entry", DEFAULT_DELIMITER_ENTRY);
@@ -160,7 +165,7 @@ public class SQLSourceHelper {
     }
 
     String[] row = null;
-
+    String[] row_send = null;
     for (int i = 0; i < queryResult.size(); i++) {
       List<Object> rawRow = queryResult.get(i);
       row = new String[rawRow.size()];
@@ -171,7 +176,20 @@ public class SQLSourceHelper {
           row[j] = "";
         }
       }
-      allRows.add(row);
+	
+      // if sendWithIncClumn
+	 if ((!sendWithIncClumn)){
+		 row_send = new String[rawRow.size()-1];
+		 for (int k=0; k < rawRow.size()-1; k++){
+			 row_send[k] = row[k+1];
+		 }
+	    } else {
+		 row_send = new String[rawRow.size()];
+		 for (int k=0; k < rawRow.size(); k++){
+			 row_send[k] = row[k];	
+	      }
+	    }
+      allRows.add(row_send);
     }
 
     return allRows;
