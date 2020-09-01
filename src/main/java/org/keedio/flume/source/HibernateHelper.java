@@ -102,25 +102,12 @@ public class HibernateHelper {
 		if (!session.isConnected()){
 			resetConnection();
 		}
-				
-		if (sqlSourceHelper.isCustomQuerySet()){
-			
-			query = session.createSQLQuery(sqlSourceHelper.buildQuery());
-			
-			if (sqlSourceHelper.getMaxRows() != 0){
-				query = query.setMaxResults(sqlSourceHelper.getMaxRows());
-			}			
-		}
-		else
-		{
-			query = session
-					.createSQLQuery(sqlSourceHelper.getQuery())
-					.setFirstResult(Integer.parseInt(sqlSourceHelper.getCurrentIndex()));
-			
-			if (sqlSourceHelper.getMaxRows() != 0){
-				query = query.setMaxResults(sqlSourceHelper.getMaxRows());
-			}
-		}
+
+		query = session.createSQLQuery(sqlSourceHelper.buildQuery());
+		
+		if (sqlSourceHelper.getMaxRows() != 0){
+			query = query.setMaxResults(sqlSourceHelper.getMaxRows());
+		}			
 		
 		try {
 			rowsList = query.setFetchSize(sqlSourceHelper.getMaxRows()).setResultTransformer(Transformers.TO_LIST).list();
@@ -130,14 +117,7 @@ public class HibernateHelper {
 		}
 		
 		if (!rowsList.isEmpty()){
-			if (sqlSourceHelper.isCustomQuerySet()){
-					sqlSourceHelper.setCurrentIndex(rowsList.get(rowsList.size()-1).get(0).toString());
-			}
-			else
-			{
-				sqlSourceHelper.setCurrentIndex(Integer.toString((Integer.parseInt(sqlSourceHelper.getCurrentIndex())
-						+ rowsList.size())));
-			}
+			sqlSourceHelper.setCurrentIndex(rowsList.get(rowsList.size()-1).get(0).toString());
 		}
 		
 		return rowsList;
