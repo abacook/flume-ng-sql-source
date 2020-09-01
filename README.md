@@ -1,7 +1,7 @@
 flume-ng-sql-source
 ================
 
-This project is used for [flume-ng](https://github.com/apache/flume) to communicate with sql databases
+该项目是基于https://github.com/keedio/flume-ng-sql-source 5.3版本基础上进行的修改，支持自定义消息格式（可删除增量字段、定义分割符、替换分割符）；由于非专业java开发，代码可能有不足之处，请谅解
 
 Current sql database engines supported
 -------------------------------
@@ -58,15 +58,27 @@ Mandatory properties in <b>bold</b>
 | <b>table</b> | - | Table to export data |
 | <b>status.file.name</b> | - | Local file name to save last row number read |
 | status.file.path | /var/lib/flume | Path to save the status file |
-| start.from | 0 | Start value to import data |
-| delimiter.entry | , | delimiter of incoming entry | 
-| enclose.by.quotes | true | If Quotes are applied to all values in the output. |
-| columns.to.select | * | Which colums of the table will be selected |
+
 | run.query.delay | 10000 | ms to wait between run queries |
 | batch.size| 100 | Batch size to send events to flume channel |
 | max.rows | 10000| Max rows to import per query |
 | read.only | false| Sets read only session with DDBB |
-| custom.query | - | Custom query to force a special request to the DB, be carefull. Check below explanation of this property. |
+
+# table 查询
+| columns.to.select | * | 查询字段|
+| incremental.column.alias.name | - | 增量字段，可以自定义查询内容 |
+| incremental.column.alias.name | - | 增量字段别名 |
+| incremental.column.value| - | 增量字段查询开始值 |
+| delimiter.entry | - | 消息分割符 |
+
+# table 查询
+| start.from | 0 | 增量字段开始值 |
+| custom.query | - | 自定义查询sql ， $@$ 为替换增量字段标识， 必须有 $@$ ，否则会一直查询全量并sink |
+
+| delimiter.replace | true | 是否替换分割符 |
+| delimiter.replace.entry | - | 用于替换的分隔符 |
+
+
 | hibernate.connection.driver_class | -| Driver class to use by hibernate, if not specified the framework will auto asign one |
 | hibernate.dialect | - | Dialect to use by hibernate, if not specified the framework will auto asign one. Check https://docs.jboss.org/hibernate/orm/4.3/manual/en-US/html/ch03.html#configuration-optional-dialects for a complete list of available dialects |
 | hibernate.connection.provider_class | - | Set to org.hibernate.connection.C3P0ConnectionProvider to use C3P0 connection pool (recommended for production) |
