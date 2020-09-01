@@ -80,20 +80,11 @@ Mandatory properties in <b>bold</b>
 
 Standard Query
 -------------
-If no custom query is set, ```SELECT <columns.to.select> FROM <table>``` will be executed each ```run.query.delay``` milliseconds configured
+实际运行查询语句为类似 select 增量字段,查询字段1,查询字段2,查询字段3 from 表名 where 增量字段 > 当前增量; 查询返回结果集后，将第一列增量字段删除后，根据分割符组合为发送消息
 
 Custom Query
 -------------
-A custom query is supported to bring the possibility of using the entire SQL language. This is powerful, but risky, be careful with the custom queries used.  
-
-To avoid row export repetitions use the $@$ special character in WHERE clause, to incrementaly export not processed rows and the new ones inserted.
-
-IMPORTANT: For proper operation of Custom Query ensure that incremental field will be returned in the first position of the Query result.
-
-Example:
-```
-agent.sources.sql-source.custom.query = SELECT incrementalField,field2 FROM table1 WHERE incrementalField > $@$ 
-```
+自定义查询sql 第一个字段必须为增量字段， 查询返回结果集后，将第一列增量字段删除后，根据分割符组合为发送消息
 
 Configuration example
 --------------------
@@ -149,23 +140,12 @@ a1.channels.c1.byteCapacity = 800000
 
 Known Issues
 ---------
-An issue with Java SQL Types and Hibernate Types could appear Using SQL Server databases and SQL Server Dialect coming with Hibernate.  
-  
-Something like:
-```
-org.hibernate.MappingException: No Dialect mapping for JDBC type: -15
-```
 
-Use ```org.keedio.flume.source.SQLServerCustomDialect``` in flume configuration file to solve this problem.
 
 Special thanks
 ---------------
 
-I used flume-ng-kafka to guide me (https://github.com/baniuyao/flume-ng-kafka-source.git).
-Thanks to [Frank Yao](https://github.com/baniuyao).
-
+感谢 https://github.com/keedio/flume-ng-sql-source 
 Version History
 ---------------
-+ Version 1.5.1 added charset encoding for result set is now configurable.
-+ Stable version is 1.5.0 (compatible with Apache Flume 1.8.0)
-+ Previous stable version is 1.4.3 (compatible with Apache Flume prior to 1.7.0)
+
