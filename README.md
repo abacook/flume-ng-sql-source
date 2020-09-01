@@ -64,14 +64,12 @@ Mandatory properties in <b>bold</b>
 | max.rows | 10000| Max rows to import per query |
 | read.only | false| Sets read only session with DDBB |
 
-# table 查询
 | columns.to.select | * | 查询字段|
 | incremental.column.alias.name | - | 增量字段，可以自定义查询内容 |
 | incremental.column.alias.name | - | 增量字段别名 |
 | incremental.column.value| - | 增量字段查询开始值 |
 | delimiter.entry | - | 消息分割符 |
 
-# table 查询
 | start.from | 0 | 增量字段开始值 |
 | custom.query | - | 自定义查询sql ， $@$ 为替换增量字段标识， 必须有 $@$ ，否则会一直查询全量并sink |
 
