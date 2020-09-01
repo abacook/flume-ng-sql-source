@@ -46,17 +46,16 @@ public class SQLSourceHelper {
   private File file, directory;
   private int runQueryDelay, batchSize, maxRows;
   private String startFrom, currentIndex;
-  private String statusFilePath, statusFileName, connectionURL, table,
-    columnsToSelect, customQuery, query, sourceName, delimiterEntry, connectionUserName, connectionPassword,
+  private String statusFilePath, statusFileName, connectionURL, table,incrementalColumn,incrementalAliasColumn,
+    columnsToSelect, customQuery, query, sourceName, delimiterEntry, delimiterReplaceEntry,connectionUserName, connectionPassword,
 		defaultCharsetResultSet;
-  private Boolean encloseByQuotes;
-
+  
   private Context context;
 
   private Map<String, String> statusFileJsonMap = new LinkedHashMap<String, String>();
 
   private boolean readOnlySession;
-  private boolean sendWithIncClumn;	
+  private boolean isReplaceEntry;
   
   private static final String DEFAULT_STATUS_DIRECTORY = "/var/lib/flume";
   private static final int DEFAULT_QUERY_DELAY = 10000;
@@ -64,7 +63,7 @@ public class SQLSourceHelper {
   private static final int DEFAULT_MAX_ROWS = 10000;
   private static final String DEFAULT_INCREMENTAL_VALUE = "0";
   private static final String DEFAULT_DELIMITER_ENTRY = ",";
-  private static final Boolean DEFAULT_ENCLOSE_BY_QUOTES = true;
+  private static final String DEFAULT_DELIMITER_REPLACE_ENTRY = " ";  
 
   private static final String SOURCE_NAME_STATUS_FILE = "SourceName";
   private static final String URL_STATUS_FILE = "URL";
@@ -73,8 +72,7 @@ public class SQLSourceHelper {
   private static final String LAST_INDEX_STATUS_FILE = "LastIndex";
   private static final String QUERY_STATUS_FILE = "Query";
   private static final String DEFAULT_CHARSET_RESULTSET = "UTF-8";
-  private static final Boolean DEFAULT_SEND_WITH_INC_CLUMN = true;  
-  
+
 
   /**
    * Builds an SQLSourceHelper containing the configuration parameters and
@@ -91,6 +89,8 @@ public class SQLSourceHelper {
     statusFileName = context.getString("status.file.name");
     table = context.getString("table");
     columnsToSelect = context.getString("columns.to.select", "*");
+    incrementalColumn = context.getString("incremental.column.name");
+    incrementalAliasColumn = context.getString("incremental.column.alias.name");
     runQueryDelay = context.getInteger("run.query.delay", DEFAULT_QUERY_DELAY);
     directory = new File(statusFilePath);
     customQuery = context.getString("custom.query");
@@ -101,12 +101,11 @@ public class SQLSourceHelper {
     connectionPassword = context.getString("hibernate.connection.password");
     readOnlySession = context.getBoolean("read.only", false);
     
-    sendWithIncClumn = context.getBoolean("incremental.column.send", DEFAULT_SEND_WITH_INC_CLUMN);    
-    
     this.sourceName = sourceName;
     startFrom = context.getString("start.from", DEFAULT_INCREMENTAL_VALUE);
     delimiterEntry = context.getString("delimiter.entry", DEFAULT_DELIMITER_ENTRY);
-    encloseByQuotes = context.getBoolean("enclose.by.quotes", DEFAULT_ENCLOSE_BY_QUOTES);
+    isReplaceEntry = context.getBoolean("delimiter.replace", false);  
+    delimiterReplaceEntry = context.getString("delimiter.replace.entry", DEFAULT_DELIMITER_REPLACE_ENTRY);
     statusFileJsonMap = new LinkedHashMap<String, String>();
     defaultCharsetResultSet = context.getString("default.charset.resultset", DEFAULT_CHARSET_RESULTSET);
 
@@ -131,7 +130,7 @@ public class SQLSourceHelper {
   public String buildQuery() {
 
     if (customQuery == null) {
-      return "SELECT " + columnsToSelect + " FROM " + table;
+      return "SELECT " + incrementalColumn + " as " + incrementalAliasColumn + ", " + columnsToSelect + " FROM " + table + " WHERE " + incrementalColumn + " > " + currentIndex;
     } else {
       if (customQuery.contains("$@$")) {
         return customQuery.replace("$@$", currentIndex);
@@ -154,11 +153,11 @@ public class SQLSourceHelper {
    * Useful for csvWriter
    *
    * @param queryResult Query Result from hibernate executeQuery method
-   * @return A list of String arrays, ready for csvWriter.writeall method
+   * @return A list of String arrays, ready for event method
    */
-  public List<String[]> getAllRows(List<List<Object>> queryResult) {
+  public List<String> getAllRows(List<List<Object>> queryResult) {
 
-    List<String[]> allRows = new ArrayList<String[]>();
+    List<String> allRows = new ArrayList<String>();
 
     if (queryResult == null || queryResult.isEmpty()) {
       return allRows;
@@ -166,6 +165,7 @@ public class SQLSourceHelper {
 
     String[] row = null;
     String[] row_send = null;
+    String row_send_string = null;
     for (int i = 0; i < queryResult.size(); i++) {
       List<Object> rawRow = queryResult.get(i);
       row = new String[rawRow.size()];
@@ -176,20 +176,19 @@ public class SQLSourceHelper {
           row[j] = "";
         }
       }
-	
-      // if sendWithIncClumn
-	 if ((!sendWithIncClumn)){
-		 row_send = new String[rawRow.size()-1];
-		 for (int k=0; k < rawRow.size()-1; k++){
+	      
+      // 删除第一个字段
+	 row_send = new String[rawRow.size()-1];
+	 for (int k=0; k < rawRow.size()-1; k++){
+		 if (isReplaceEntry){
+			row_send[k] = row[k+1].replace(delimiterEntry,delimiterReplaceEntry);
+		 } else {
 			 row_send[k] = row[k+1];
-		 }
-	    } else {
-		 row_send = new String[rawRow.size()];
-		 for (int k=0; k < rawRow.size(); k++){
-			 row_send[k] = row[k];	
-	      }
-	    }
-      allRows.add(row_send);
+		 } 
+	 }
+
+	    
+      allRows.add(new String(stringJoin(row_send, delimiterEntry)));
     }
 
     return allRows;
@@ -387,10 +386,6 @@ public class SQLSourceHelper {
     return readOnlySession;
   }
 
-  boolean encloseByQuotes() {
-    return encloseByQuotes;
-  }
-
   String getDelimiterEntry() {
     return delimiterEntry;
   }
@@ -406,4 +401,16 @@ public class SQLSourceHelper {
   public String getDefaultCharsetResultSet() {
     return defaultCharsetResultSet;
   }
+  
+  public String stringJoin(String[] string,String delemiter) {
+	    String result = "";
+	    for (int i = 0; i < string.length; i++)		
+	    	if(i==0){
+	    		result = string[0];
+	    	} else {
+	    		result	= result + delemiter + string[i];
+	    	}
+	    return result;
+	  }
+  
 }
