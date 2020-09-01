@@ -95,44 +95,52 @@ Configuration example
 --------------------
 
 ```properties
-# For each one of the sources, the type is defined
-agent.sources.sqlSource.type = org.keedio.flume.source.SQLSource
+###########sources#################
+####s1######
+a1.sources.s1.type = org.keedio.flume.source.SQLSourceOriginal
+a1.sources.s1.hibernate.connection.url = jdbc:postgresql://xxx.xxx.xxx.xxx:5432/postgres
+a1.sources.s1.hibernate.connection.user = xxx
+a1.sources.s1.hibernate.connection.password = xxx
+a1.sources.s1.hibernate.connection.autocommit = flase
+a1.sources.s1.hibernate.dialect = org.hibernate.dialect.PostgreSQLDialect
+a1.sources.s1.hibernate.connection.driver_class = org.postgresql.Driver
+a1.sources.s1.run.query.delay = 300000
+a1.sources.s1.status.file.path = ./status/
+a1.sources.s1.status.file.name = test.status
 
-agent.sources.sqlSource.hibernate.connection.url = jdbc:db2://192.168.56.70:50000/sample
 
-# Hibernate Database connection properties
-agent.sources.sqlSource.hibernate.connection.user = db2inst1
-agent.sources.sqlSource.hibernate.connection.password = db2inst1
-agent.sources.sqlSource.hibernate.connection.autocommit = true
-agent.sources.sqlSource.hibernate.dialect = org.hibernate.dialect.DB2Dialect
-agent.sources.sqlSource.hibernate.connection.driver_class = com.ibm.db2.jcc.DB2Driver
+#### table config ##### 
+# 默认查询会将增量字段放在第一列，发送时第一列会被剔除 
+# a1.sources.s1.table = xxxxx
+# a1.sources.s1.columns.to.select = *
+# a1.sources.s1.incremental.column.name = tid
+# a1.sources.s1.incremental.column.alias.name = ttttid 
+# a1.sources.s1.incremental.column.value =10
+# a1.sources.s1.delimiter.entry = ,
+# a1.sources.s1.delimiter.replace = true
+# a1.sources.s1.delimiter.replace.entry = "|||"
 
-#agent.sources.sqlSource.table = employee1
 
-# Columns to import to kafka (default * import entire row)
-#agent.sources.sqlSource.columns.to.select = *
+#### custom query ##### 
+# 第一列必须为增量字段，发送时第一列会被剔除 
+a1.sources.s1.start.from = 0
+a1.sources.s1.custom.query =  select tid, row_to_json(t)||'' from (select tid, a1 as "A1", a1 as "A2" from test where tid > $@$ ) t 
+a1.sources.s1.delimiter.entry = ,
+a1.sources.s1.delimiter.replace = false
 
-# Query delay, each configured milisecond the query will be sent
-agent.sources.sqlSource.run.query.delay=10000
 
-# Status file is used to save last readed row
-agent.sources.sqlSource.status.file.path = /var/log/flume
-agent.sources.sqlSource.status.file.name = sqlSource.status
-
-# Custom query
-agent.sources.sqlSource.start.from = 19700101000000000000
-agent.sources.sqlSource.custom.query = SELECT * FROM (select DECIMAL(test) * 1000000 AS INCREMENTAL, EMPLOYEE1.* from employee1 UNION select DECIMAL(test) * 1000000 AS INCREMENTAL, EMPLOYEE2.* from employee2) WHERE INCREMENTAL > $@$ ORDER BY INCREMENTAL ASC
-
-agent.sources.sqlSource.batch.size = 1000
-agent.sources.sqlSource.max.rows = 1000
-agent.sources.sqlSource.delimiter.entry = |
-
-agent.sources.sqlSource.hibernate.connection.provider_class = org.hibernate.connection.C3P0ConnectionProvider
-agent.sources.sqlSource.hibernate.c3p0.min_size=1
-agent.sources.sqlSource.hibernate.c3p0.max_size=10
+a1.sources.s1.batch.size = 10
+a1.sources.s1.max.rows = 10
+a1.sources.s1.hibernate.connection.provider_class = org.hibernate.connection.C3P0ConnectionProvider
+a1.sources.s1.hibernate.c3p0.min_size=1
+a1.sources.s1.hibernate.c3p0.max_size=10
 
 # The channel can be defined as follows.
-agent.sources.sqlSource.channels = memoryChannel
+a1.channels.c1.type = memory
+a1.channels.c1.capacity = 10000
+a1.channels.c1.transactionCapacity = 10000
+a1.channels.c1.byteCapacityBufferPercentage = 20
+a1.channels.c1.byteCapacity = 800000
 ```
 
 Known Issues
