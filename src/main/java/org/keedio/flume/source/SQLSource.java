@@ -36,7 +36,6 @@ import org.keedio.flume.metrics.SqlSourceCounter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.opencsv.CSVWriter;
 
 /*Support UTF-8 character encoding.*/
 import com.google.common.base.Charsets;
@@ -59,10 +58,9 @@ public class SQLSource extends AbstractSource implements Configurable, PollableS
         return 0;
     }
     private Context context;
-    private static final Logger LOG = LoggerFactory.getLogger(SQLSource.class);
+    private static final Logger LOG = LoggerFactory.getLogger(SQLSourceOriginal.class);
     protected SQLSourceHelper sqlSourceHelper;
     private SqlSourceCounter sqlSourceCounter;
-    private CSVWriter csvWriter;
     private HibernateHelper hibernateHelper;
 	
     /**
@@ -85,8 +83,6 @@ public class SQLSource extends AbstractSource implements Configurable, PollableS
         hibernateHelper = new HibernateHelper(sqlSourceHelper);
         hibernateHelper.establishSession();
        
-        /* Instantiate the CSV Writer */
-        csvWriter = new CSVWriter(new ChannelWriter(),sqlSourceHelper.getDelimiterEntry().charAt(0));
     }  
     
     /**
@@ -95,16 +91,28 @@ public class SQLSource extends AbstractSource implements Configurable, PollableS
 	@Override
 	public Status process() throws EventDeliveryException {
 		try {
+			List<Event> events = new ArrayList<>();
+			
 			sqlSourceCounter.startProcess();			
 			
 			List<List<Object>> result = hibernateHelper.executeQuery();
 						
 			if (!result.isEmpty())
 			{       
-				csvWriter.writeAll(sqlSourceHelper.getAllRows(result),sqlSourceHelper.encloseByQuotes());
-				csvWriter.flush();
-				sqlSourceCounter.incrementEventCount(result.size());
+				List<String> allRows = sqlSourceHelper.getAllRows(result);
+						
 				
+				Event event = null;
+                for (String row : allRows) {
+                    event = new SimpleEvent();
+                    event.setBody(row.getBytes());
+                    events.add(event);
+                }
+                
+                getChannelProcessor().processEventBatch(events);
+                events.clear();		
+                
+				sqlSourceCounter.incrementEventCount(result.size());
 				sqlSourceHelper.updateStatusFile();
 			}
 			
@@ -143,46 +151,14 @@ public class SQLSource extends AbstractSource implements Configurable, PollableS
         
         try 
         {
-            hibernateHelper.closeSession();
-            csvWriter.close();    
+            hibernateHelper.closeSession();  
         } catch (IOException e) {
-        	LOG.warn("Error CSVWriter object ", e);
+        	LOG.warn("Error ", e);
         } finally {
         	this.sqlSourceCounter.stop();
         	super.stop();
         }
     }
     
-    private class ChannelWriter extends Writer{
-        private List<Event> events = new ArrayList<>();
-
-        @Override
-        public void write(char[] cbuf, int off, int len) throws IOException {
-            Event event = new SimpleEvent();
-            
-            String s = new String(cbuf);
-            event.setBody(s.substring(off, len-1).getBytes(Charset.forName(sqlSourceHelper.getDefaultCharsetResultSet())));
-            
-            Map<String, String> headers;
-            headers = new HashMap<String, String>();
-			headers.put("timestamp", String.valueOf(System.currentTimeMillis()));
-			event.setHeaders(headers);
-			
-            events.add(event);
-            
-            if (events.size() >= sqlSourceHelper.getBatchSize())
-            	flush();
-        }
-
-        @Override
-        public void flush() throws IOException {
-            getChannelProcessor().processEventBatch(events);
-            events.clear();
-        }
-
-        @Override
-        public void close() throws IOException {
-            flush();
-        }
-    }
+   
 }
