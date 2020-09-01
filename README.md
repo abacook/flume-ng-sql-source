@@ -55,13 +55,14 @@ Mandatory properties in <b>bold</b>
 | <b>hibernate.connection.url</b> | - | Url to connect with the remote Database |
 | <b>hibernate.connection.user</b> | - | Username to connect with the database |
 | <b>hibernate.connection.password</b> | - | Password to connect with the database |
-| <b>table</b> | - | Table to export data |
+| <b>status.file.path</b>| /var/lib/flume | Path to save the status file |
 | <b>status.file.name</b> | - | Local file name to save last row number read |
-| status.file.path | /var/lib/flume | Path to save the status file |
+
 | run.query.delay | 10000 | ms to wait between run queries |
 | batch.size| 100 | Batch size to send events to flume channel |
 | max.rows | 10000| Max rows to import per query |
 | read.only | false| Sets read only session with DDBB |
+| table | - | Table to export data |
 | columns.to.select | * | 查询字段|
 | incremental.column.alias.name | - | 增量字段，可以自定义查询内容 |
 | incremental.column.alias.name | - | 增量字段别名 |
