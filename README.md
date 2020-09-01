@@ -57,7 +57,6 @@ Mandatory properties in <b>bold</b>
 | <b>hibernate.connection.password</b> | - | Password to connect with the database |
 | <b>status.file.path</b>| /var/lib/flume | Path to save the status file |
 | <b>status.file.name</b> | - | Local file name to save last row number read |
-
 | run.query.delay | 10000 | ms to wait between run queries |
 | batch.size| 100 | Batch size to send events to flume channel |
 | max.rows | 10000| Max rows to import per query |
