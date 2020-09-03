@@ -1,7 +1,7 @@
 flume-ng-sql-source
 ================
 
-该项目是基于https://github.com/keedio/flume-ng-sql-source 5.3版本基础上进行的修改，支持自定义消息格式（可删除增量字段、定义分割符、替换分割符）；由于非专业java开发，代码可能有不足之处，请谅解
+该项目是基于https://github.com/keedio/flume-ng-sql-source 1.5.2版本基础上进行的修改，支持自定义消息格式（可删除增量字段、定义分割符、替换分割符）；由于非专业java开发，代码可能有不足之处，请谅解
 
 Current sql database engines supported
 -------------------------------
